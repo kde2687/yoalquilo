@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Toaster } from '@/components/ui/sonner'
 
-const geist = Geist({
+const plusJakartaSans = Plus_Jakarta_Sans({
   variable: '--font-sans',
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
 })
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={`${geist.variable} antialiased min-h-screen bg-background`}>
+      <body className={`${plusJakartaSans.variable} antialiased min-h-screen bg-background`}>
         <Navbar />
         <main>{children}</main>
         <Footer />
