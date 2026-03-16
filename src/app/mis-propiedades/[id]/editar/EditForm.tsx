@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { X, Upload, Minus, Plus } from 'lucide-react'
+import { X, Upload, Minus, Plus, PauseCircle, PlayCircle } from 'lucide-react'
 import { Property } from '@/lib/types'
 
 const PROVINCES = [
@@ -56,6 +56,7 @@ export default function EditForm({ property }: { property: Property }) {
   const [existingImages, setExistingImages] = useState<string[]>(property.images ?? [])
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [newPreviews, setNewPreviews] = useState<string[]>([])
+  const [isActive, setIsActive] = useState(property.is_active)
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -114,6 +115,7 @@ export default function EditForm({ property }: { property: Property }) {
           contact_phone: contactPhone || null,
           contact_email: contactEmail || null,
           contact_instagram: contactInstagram || null,
+          is_active: isActive,
         })
         .eq('id', property.id)
 
@@ -233,6 +235,33 @@ export default function EditForm({ property }: { property: Property }) {
         <div className="space-y-2">
           <Label className="text-base">Instagram</Label>
           <Input placeholder="@tunombre" value={contactInstagram} onChange={(e) => setContactInstagram(e.target.value)} className="h-12 text-base" />
+        </div>
+      </div>
+
+      {/* Estado */}
+      <div className="bg-white border border-border rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-base">Estado de la propiedad</p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {isActive ? 'Activa — visible para todos los usuarios' : 'Pausada — no aparece en búsquedas'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsActive((v) => !v)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-colors ${
+              isActive
+                ? 'bg-destructive/10 text-destructive hover:bg-destructive/20'
+                : 'bg-green-100 text-green-700 hover:bg-green-200'
+            }`}
+          >
+            {isActive ? (
+              <><PauseCircle className="w-4 h-4" /> Pausar</>
+            ) : (
+              <><PlayCircle className="w-4 h-4" /> Activar</>
+            )}
+          </button>
         </div>
       </div>
 
