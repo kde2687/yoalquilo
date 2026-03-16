@@ -43,7 +43,7 @@ export default async function Home({
       <section className="bg-primary text-primary-foreground py-16 px-4">
         <div className="max-w-3xl mx-auto text-center space-y-6">
           <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-            Alquilá directo con el propietario
+            Alquilá directamente con el propietario
           </h1>
           <p className="text-lg md:text-xl opacity-90">
             Sin intermediarios. Contacto directo por WhatsApp, teléfono o email.
