@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,10 +11,11 @@ import Link from 'next/link'
 export default function RegistroPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
-  const router = useRouter()
   const supabase = createClient()
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -28,7 +28,14 @@ export default function RegistroPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name } },
+      options: {
+        data: {
+          full_name: `${firstName} ${lastName}`,
+          first_name: firstName,
+          last_name: lastName,
+          phone,
+        },
+      },
     })
     if (error) {
       toast.error(error.message)
@@ -64,13 +71,38 @@ export default function RegistroPage() {
         </div>
 
         <form onSubmit={handleRegister} className="bg-white border border-border rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="firstName" className="text-base">Nombre</Label>
+              <Input
+                id="firstName"
+                placeholder="Juan"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                className="h-12 text-base"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName" className="text-base">Apellido</Label>
+              <Input
+                id="lastName"
+                placeholder="García"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+                className="h-12 text-base"
+              />
+            </div>
+          </div>
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-base">Nombre</Label>
+            <Label htmlFor="phone" className="text-base">Número de celular</Label>
             <Input
-              id="name"
-              placeholder="Tu nombre"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              id="phone"
+              type="tel"
+              placeholder="+54 9 11 1234-5678"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               required
               className="h-12 text-base"
             />

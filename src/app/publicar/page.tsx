@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -42,8 +42,18 @@ export default function PublicarPage() {
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<FormData>(INITIAL)
   const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(true)
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) router.replace('/auth/login?next=/publicar')
+      else setChecking(false)
+    })
+  }, [])
+
+  if (checking) return null
 
   const update = (partial: Partial<FormData>) => setForm((f) => ({ ...f, ...partial }))
   const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1))
