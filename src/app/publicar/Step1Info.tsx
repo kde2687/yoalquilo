@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { FormData } from './page'
-import { CITIES_BY_PROVINCE } from '@/lib/argentina-cities'
+import { ARGENTINA_LOCATIONS } from '@/lib/argentina-cities'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -50,8 +50,7 @@ function CityCombobox({
     closeTimer.current = setTimeout(() => setOpen(false), 150)
   }
 
-  // Keep query in sync when the parent resets the value (e.g. province change)
-  // We use a ref-based approach: if parent passes '' we reset the local query.
+  // Keep query in sync when the parent resets the value (e.g. province or partido change)
   if (value === '' && query !== '') {
     setQuery('')
   }
@@ -60,7 +59,7 @@ function CityCombobox({
     return (
       <Input
         disabled
-        placeholder="Primero seleccioná una provincia"
+        placeholder="Seleccioná una provincia primero"
         className="h-12 text-base bg-muted"
       />
     )
@@ -104,6 +103,14 @@ function CityCombobox({
   )
 }
 
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+function getPartidoLabel(province: string): string {
+  if (province === 'Buenos Aires') return 'Partido'
+  if (province === 'CABA') return 'Comuna'
+  return 'Departamento'
+}
+
 // ─── Step1Info ────────────────────────────────────────────────────────────────
 
 export default function Step1Info({
@@ -115,11 +122,25 @@ export default function Step1Info({
   update: (p: Partial<FormData>) => void
   onNext: () => void
 }) {
-  const cities = form.province ? (CITIES_BY_PROVINCE[form.province] ?? []) : []
-  const valid = form.title.trim() && form.location.trim() && !!form.province
+  // Partido/Departamento is local state — not persisted in FormData
+  const [partido, setPartido] = useState<string>('')
+
+  const provinceData = form.province ? (ARGENTINA_LOCATIONS[form.province] ?? {}) : {}
+  const partidoKeys = Object.keys(provinceData).sort()
+  const cities: string[] = partido ? (provinceData[partido] ?? []) : []
+
+  const partidoLabel = form.province ? getPartidoLabel(form.province) : 'Departamento'
+
+  const valid = !!(form.title.trim() && form.location.trim() && form.province)
 
   const handleProvinceChange = (province: string) => {
+    setPartido('')
     update({ province: province || undefined, location: '' })
+  }
+
+  const handlePartidoChange = (value: string) => {
+    setPartido(value)
+    update({ location: '' })
   }
 
   return (
@@ -151,8 +172,29 @@ export default function Step1Info({
           className="w-full h-12 text-base rounded-lg border border-input bg-white px-3 outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Seleccioná una provincia</option>
-          {Object.keys(CITIES_BY_PROVINCE).sort().map((p) => (
+          {Object.keys(ARGENTINA_LOCATIONS).sort().map((p) => (
             <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Partido / Departamento / Comuna */}
+      <div className="space-y-2">
+        <Label htmlFor="partido" className="text-base">{partidoLabel}</Label>
+        <select
+          id="partido"
+          value={partido}
+          onChange={(e) => handlePartidoChange(e.target.value)}
+          disabled={!form.province}
+          className="w-full h-12 text-base rounded-lg border border-input bg-white px-3 outline-none focus:ring-2 focus:ring-ring disabled:bg-muted disabled:text-muted-foreground"
+        >
+          <option value="">
+            {form.province
+              ? `Seleccioná un ${partidoLabel.toLowerCase()}`
+              : 'Seleccioná una provincia primero'}
+          </option>
+          {partidoKeys.map((k) => (
+            <option key={k} value={k}>{k}</option>
           ))}
         </select>
       </div>
