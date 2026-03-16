@@ -1,0 +1,137 @@
+export const dynamic = 'force-dynamic'
+
+import { createClient } from '@/lib/supabase/server'
+import PropertyCard from '@/components/PropertyCard'
+import { Property } from '@/lib/types'
+import { Search, MapPin } from 'lucide-react'
+import Link from 'next/link'
+
+const PROVINCES = [
+  'Buenos Aires', 'CABA', 'Córdoba', 'Mendoza', 'Santa Fe',
+  'Salta', 'Jujuy', 'Tucumán', 'Misiones', 'Corrientes',
+  'Entre Ríos', 'Chubut', 'Neuquén', 'Río Negro', 'San Luis',
+  'La Rioja', 'Catamarca', 'Formosa', 'Chaco', 'Santiago del Estero',
+  'San Juan', 'La Pampa', 'Santa Cruz', 'Tierra del Fuego',
+]
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; provincia?: string }>
+}) {
+  const params = await searchParams
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('properties')
+    .select('*')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+
+  if (params.q) {
+    query = query.ilike('title', `%${params.q}%`)
+  }
+  if (params.provincia) {
+    query = query.eq('province', params.provincia)
+  }
+
+  const { data: properties } = await query.limit(24)
+
+  return (
+    <div>
+      {/* Hero */}
+      <section className="bg-primary text-primary-foreground py-16 px-4">
+        <div className="max-w-3xl mx-auto text-center space-y-6">
+          <h1 className="text-4xl md:text-5xl font-bold leading-tight">
+            Alquilá directo con el propietario
+          </h1>
+          <p className="text-lg md:text-xl opacity-90">
+            Sin intermediarios. Contacto directo por WhatsApp, teléfono o email.
+          </p>
+
+          {/* Search */}
+          <form method="GET" action="/" className="mt-8">
+            <div className="bg-white rounded-2xl p-3 flex flex-col sm:flex-row gap-2 shadow-lg">
+              <div className="flex-1 flex items-center gap-2 px-3">
+                <Search className="w-5 h-5 text-muted-foreground shrink-0" />
+                <input
+                  name="q"
+                  defaultValue={params.q}
+                  placeholder="Buscar por nombre o lugar..."
+                  className="flex-1 outline-none text-foreground placeholder:text-muted-foreground bg-transparent text-base py-1"
+                />
+              </div>
+              <div className="flex items-center gap-2 px-3 border-t sm:border-t-0 sm:border-l border-border pt-2 sm:pt-0">
+                <MapPin className="w-5 h-5 text-muted-foreground shrink-0" />
+                <select
+                  name="provincia"
+                  defaultValue={params.provincia ?? ''}
+                  className="outline-none text-foreground bg-transparent text-base py-1 w-full sm:w-44"
+                >
+                  <option value="">Todas las provincias</option>
+                  {PROVINCES.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="submit"
+                className="bg-primary text-primary-foreground rounded-xl px-6 py-2.5 font-semibold hover:opacity-90 transition-opacity text-base"
+              >
+                Buscar
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      {/* Properties */}
+      <section className="max-w-6xl mx-auto px-4 py-10">
+        {params.q || params.provincia ? (
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold">
+              {properties?.length ?? 0} resultado{properties?.length !== 1 ? 's' : ''}
+              {params.provincia ? ` en ${params.provincia}` : ''}
+              {params.q ? ` para "${params.q}"` : ''}
+            </h2>
+            <Link href="/" className="text-sm text-primary hover:underline">
+              Ver todo
+            </Link>
+          </div>
+        ) : (
+          <h2 className="text-xl font-semibold mb-6">Propiedades disponibles</h2>
+        )}
+
+        {properties && properties.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {properties.map((p: Property) => (
+              <PropertyCard key={p.id} property={p} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 text-muted-foreground">
+            <p className="text-5xl mb-4">🏡</p>
+            <p className="text-lg font-medium">No encontramos propiedades con esos filtros.</p>
+            <p className="text-sm mt-1">Probá con otro destino o borrá los filtros.</p>
+          </div>
+        )}
+      </section>
+
+      {/* CTA owners */}
+      <section className="bg-muted border-t border-border py-14 px-4 mt-6">
+        <div className="max-w-2xl mx-auto text-center space-y-4">
+          <h2 className="text-2xl font-bold">¿Tenés una propiedad para alquilar?</h2>
+          <p className="text-muted-foreground text-base">
+            Publicá en minutos y recibí consultas directo en tu celular. Sin comisiones por reserva.
+          </p>
+          <Link
+            href="/publicar"
+            className="inline-block bg-primary text-primary-foreground rounded-xl px-8 py-3 font-semibold hover:opacity-90 transition-opacity text-base mt-2"
+          >
+            Publicar mi propiedad
+          </Link>
+        </div>
+      </section>
+    </div>
+  )
+}
