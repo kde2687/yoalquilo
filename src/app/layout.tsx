@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import { Nunito } from 'next/font/google'
+import { Nunito_Sans } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Toaster } from '@/components/ui/sonner'
 
-const nunito = Nunito({
+const nunitoSans = Nunito_Sans({
   variable: '--font-sans',
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800'],
@@ -23,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={`${nunito.variable} antialiased min-h-screen bg-background`}>
+      <body className={`${nunitoSans.variable} antialiased min-h-screen bg-background`}>
         <Navbar />
         <main>{children}</main>
         <Footer />
