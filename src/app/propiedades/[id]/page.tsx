@@ -3,11 +3,12 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Users, BedDouble, Bath, Phone, Mail, MessageCircle, Instagram, ChevronLeft, Star } from 'lucide-react'
+import { MapPin, Users, BedDouble, Bath, ChevronLeft, Star } from 'lucide-react'
 import Link from 'next/link'
 import AvailabilityCalendar from '@/components/AvailabilityCalendar'
 import StarRating from '@/components/StarRating'
 import { Review } from '@/lib/types'
+import ContactCard from './ContactCard'
 
 const AMENITY_ICONS: Record<string, string> = {
   'Pileta': '🏊',
@@ -185,61 +186,13 @@ export default async function PropertyPage({
 
         {/* Sidebar */}
         <div className="md:col-span-1">
-          <div className="sticky top-24 bg-white border border-border rounded-2xl p-5 shadow-sm space-y-4">
-            <div className="text-center pb-3 border-b border-border">
-              <span className="text-3xl font-bold text-primary">
-                ${property.price_per_night.toLocaleString('es-AR')}
-              </span>
-              <span className="text-muted-foreground"> / noche</span>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold mb-3">Contactar al propietario</p>
-              <div className="space-y-2">
-                {whatsappUrl && (
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 w-full bg-[#25D366] text-white rounded-xl px-4 py-3 font-medium hover:opacity-90 transition-opacity"
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                    WhatsApp
-                  </a>
-                )}
-                {property.contact_phone && (
-                  <a
-                    href={`tel:${property.contact_phone}`}
-                    className="flex items-center gap-3 w-full border border-border rounded-xl px-4 py-3 font-medium hover:bg-muted transition-colors"
-                  >
-                    <Phone className="w-5 h-5 text-primary" />
-                    {property.contact_phone}
-                  </a>
-                )}
-                {property.contact_email && (
-                  <div className="flex items-center gap-3 w-full border border-border rounded-xl px-4 py-3">
-                    <Mail className="w-5 h-5 text-primary shrink-0" />
-                    <span className="text-sm font-medium break-all">{property.contact_email}</span>
-                  </div>
-                )}
-                {property.contact_instagram && (
-                  <a
-                    href={`https://instagram.com/${property.contact_instagram.replace('@', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 w-full border border-border rounded-xl px-4 py-3 font-medium hover:bg-muted transition-colors"
-                  >
-                    <Instagram className="w-5 h-5 text-primary" />
-                    @{property.contact_instagram.replace('@', '')}
-                  </a>
-                )}
-              </div>
-            </div>
-
-            <p className="text-xs text-muted-foreground text-center pt-1">
-              La reserva se coordina directamente con el propietario.
-            </p>
-          </div>
+          <ContactCard
+            price={property.price_per_night}
+            whatsappUrl={whatsappUrl}
+            phone={property.contact_phone ?? null}
+            email={property.contact_email ?? null}
+            instagram={property.contact_instagram ?? null}
+          />
         </div>
       </div>
     </div>
