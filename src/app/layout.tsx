@@ -6,9 +6,9 @@ import Footer from '@/components/Footer'
 import { Toaster } from '@/components/ui/sonner'
 
 const nunitoSans = Nunito_Sans({
-  variable: '--font-sans',
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -22,8 +22,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
-      <body className={`${nunitoSans.variable} antialiased min-h-screen bg-background`}>
+    <html lang="es" className={nunitoSans.className}>
+      <body className="antialiased min-h-screen bg-background">
         <Navbar />
         <main>{children}</main>
         <Footer />
