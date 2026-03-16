@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import PropertyCard from '@/components/PropertyCard'
 import { Property } from '@/lib/types'
-import { Search, MapPin } from 'lucide-react'
+import { Search, MapPin, Calendar } from 'lucide-react'
 import Link from 'next/link'
 
 const PROVINCES = [
@@ -17,10 +17,22 @@ const PROVINCES = [
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; provincia?: string }>
+  searchParams: Promise<{ q?: string; provincia?: string; checkin?: string; checkout?: string }>
 }) {
   const params = await searchParams
   const supabase = await createClient()
+
+  // Find properties with blocked dates in the requested range
+  let excludedIds: string[] = []
+  if (params.checkin && params.checkout) {
+    const { data: blocked } = await supabase
+      .from('availability')
+      .select('property_id')
+      .gte('date', params.checkin)
+      .lte('date', params.checkout)
+      .eq('is_available', false)
+    excludedIds = [...new Set(blocked?.map((b) => b.property_id) ?? [])]
+  }
 
   let query = supabase
     .from('properties')
@@ -28,20 +40,20 @@ export default async function Home({
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
-  if (params.q) {
-    query = query.ilike('title', `%${params.q}%`)
-  }
-  if (params.provincia) {
-    query = query.eq('province', params.provincia)
-  }
+  if (params.q) query = query.ilike('title', `%${params.q}%`)
+  if (params.provincia) query = query.eq('province', params.provincia)
+  if (excludedIds.length > 0) query = query.not('id', 'in', `(${excludedIds.join(',')})`)
 
   const { data: properties } = await query.limit(24)
+
+  const today = new Date().toISOString().split('T')[0]
+  const hasFilters = params.q || params.provincia || params.checkin
 
   return (
     <div>
       {/* Hero */}
       <section className="bg-primary text-primary-foreground py-16 px-4">
-        <div className="max-w-3xl mx-auto text-center space-y-6">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
           <h1 className="text-4xl md:text-5xl font-bold leading-tight">
             Alquilá directamente con el propietario
           </h1>
@@ -50,8 +62,9 @@ export default async function Home({
           </p>
 
           {/* Search */}
-          <form method="GET" action="/" className="mt-8">
+          <form method="GET" action="/">
             <div className="bg-white rounded-2xl p-3 flex flex-col sm:flex-row gap-2 shadow-lg">
+              {/* Text search */}
               <div className="flex-1 flex items-center gap-2 px-3">
                 <Search className="w-5 h-5 text-muted-foreground shrink-0" />
                 <input
@@ -61,12 +74,16 @@ export default async function Home({
                   className="flex-1 outline-none text-foreground placeholder:text-muted-foreground bg-transparent text-base py-1"
                 />
               </div>
-              <div className="flex items-center gap-2 px-3 border-t sm:border-t-0 sm:border-l border-border pt-2 sm:pt-0">
+
+              <div className="w-px bg-border hidden sm:block" />
+
+              {/* Province */}
+              <div className="flex items-center gap-2 px-3 border-t sm:border-t-0 border-border pt-2 sm:pt-0">
                 <MapPin className="w-5 h-5 text-muted-foreground shrink-0" />
                 <select
                   name="provincia"
                   defaultValue={params.provincia ?? ''}
-                  className="outline-none text-foreground bg-transparent text-base py-1 w-full sm:w-44"
+                  className="outline-none text-foreground bg-transparent text-base py-1 w-full sm:w-40"
                 >
                   <option value="">Todas las provincias</option>
                   {PROVINCES.map((p) => (
@@ -74,6 +91,29 @@ export default async function Home({
                   ))}
                 </select>
               </div>
+
+              <div className="w-px bg-border hidden sm:block" />
+
+              {/* Dates */}
+              <div className="flex items-center gap-2 px-3 border-t sm:border-t-0 border-border pt-2 sm:pt-0">
+                <Calendar className="w-5 h-5 text-muted-foreground shrink-0" />
+                <input
+                  type="date"
+                  name="checkin"
+                  defaultValue={params.checkin}
+                  min={today}
+                  className="outline-none text-foreground bg-transparent text-sm py-1 w-32"
+                />
+                <span className="text-muted-foreground text-sm">→</span>
+                <input
+                  type="date"
+                  name="checkout"
+                  defaultValue={params.checkout}
+                  min={params.checkin ?? today}
+                  className="outline-none text-foreground bg-transparent text-sm py-1 w-32"
+                />
+              </div>
+
               <button
                 type="submit"
                 className="bg-primary text-primary-foreground rounded-xl px-6 py-2.5 font-semibold hover:opacity-90 transition-opacity text-base"
@@ -87,12 +127,13 @@ export default async function Home({
 
       {/* Properties */}
       <section className="max-w-6xl mx-auto px-4 py-10">
-        {params.q || params.provincia ? (
+        {hasFilters ? (
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">
               {properties?.length ?? 0} resultado{properties?.length !== 1 ? 's' : ''}
               {params.provincia ? ` en ${params.provincia}` : ''}
               {params.q ? ` para "${params.q}"` : ''}
+              {params.checkin && params.checkout ? ` — ${params.checkin} al ${params.checkout}` : ''}
             </h2>
             <Link href="/" className="text-sm text-primary hover:underline">
               Ver todo
