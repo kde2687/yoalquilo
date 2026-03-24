@@ -3,9 +3,10 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import PropertyCard from '@/components/PropertyCard'
 import { Property } from '@/lib/types'
-import { Search, MapPin, Calendar } from 'lucide-react'
+import { Search } from 'lucide-react'
 import Link from 'next/link'
 import { ARGENTINA_LOCATIONS } from '@/lib/argentina-cities'
+import LocationSearch from '@/components/LocationSearch'
 
 const ALL_PLACES = Array.from(new Set([
   ...Object.keys(ARGENTINA_LOCATIONS),
@@ -17,7 +18,7 @@ const ALL_PLACES = Array.from(new Set([
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; lugar?: string; checkin?: string; checkout?: string }>
+  searchParams: Promise<{ lugar?: string; checkin?: string; checkout?: string }>
 }) {
   const params = await searchParams
   const supabase = await createClient()
@@ -40,7 +41,6 @@ export default async function Home({
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
-  if (params.q) query = query.ilike('title', `%${params.q}%`)
   if (params.lugar) {
     const isProvince = Object.keys(ARGENTINA_LOCATIONS).includes(params.lugar)
     if (isProvince) {
@@ -54,7 +54,7 @@ export default async function Home({
   const { data: properties } = await query.limit(24)
 
   const today = new Date().toISOString().split('T')[0]
-  const hasFilters = params.q || params.lugar || params.checkin
+  const hasFilters = params.lugar || params.checkin
 
   return (
     <div>
@@ -68,68 +68,54 @@ export default async function Home({
             Sin intermediarios. Contacto directo por WhatsApp, teléfono o email.
           </p>
 
-          {/* Search */}
+          {/* Search — estilo Airbnb */}
           <form method="GET" action="/">
-            <div className="bg-white rounded-2xl p-3 flex flex-col sm:flex-row gap-2 shadow-lg">
-              {/* Text search */}
-              <div className="flex-1 flex items-center gap-2 px-3">
-                <Search className="w-5 h-5 text-muted-foreground shrink-0" />
-                <input
-                  name="q"
-                  defaultValue={params.q}
-                  placeholder="Buscar por nombre o lugar..."
-                  className="flex-1 outline-none text-foreground placeholder:text-muted-foreground bg-transparent text-base py-1"
-                />
+            <div className="bg-white rounded-full shadow-lg flex flex-col sm:flex-row items-stretch sm:items-center divide-y sm:divide-y-0 sm:divide-x divide-gray-200 overflow-visible">
+
+              {/* Destino */}
+              <div className="flex-1 px-6 py-3 hover:bg-gray-50 rounded-full transition-colors cursor-text">
+                <LocationSearch places={ALL_PLACES} defaultValue={params.lugar} />
               </div>
 
-              <div className="w-px bg-border hidden sm:block" />
-
-              {/* Location */}
-              <div className="flex items-center gap-2 px-3 border-t sm:border-t-0 border-border pt-2 sm:pt-0">
-                <MapPin className="w-5 h-5 text-muted-foreground shrink-0" />
-                <input
-                  name="lugar"
-                  list="places-list"
-                  defaultValue={params.lugar}
-                  placeholder="Ciudad o provincia..."
-                  autoComplete="off"
-                  className="outline-none text-foreground placeholder:text-muted-foreground bg-transparent text-base py-1 w-full sm:w-44"
-                />
-                <datalist id="places-list">
-                  {ALL_PLACES.map((p) => (
-                    <option key={p} value={p} />
-                  ))}
-                </datalist>
+              {/* Llegada */}
+              <div className="px-6 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                <div className="flex flex-col text-left">
+                  <label className="text-xs font-semibold text-gray-800">Llegada</label>
+                  <input
+                    type="date"
+                    name="checkin"
+                    defaultValue={params.checkin}
+                    min={today}
+                    className="outline-none bg-transparent text-gray-800 placeholder:text-gray-400 text-sm pt-0.5 w-32"
+                  />
+                </div>
               </div>
 
-              <div className="w-px bg-border hidden sm:block" />
-
-              {/* Dates */}
-              <div className="flex items-center gap-2 px-3 border-t sm:border-t-0 border-border pt-2 sm:pt-0">
-                <Calendar className="w-5 h-5 text-muted-foreground shrink-0" />
-                <input
-                  type="date"
-                  name="checkin"
-                  defaultValue={params.checkin}
-                  min={today}
-                  className="outline-none text-foreground bg-transparent text-sm py-1 w-32"
-                />
-                <span className="text-muted-foreground text-sm">→</span>
-                <input
-                  type="date"
-                  name="checkout"
-                  defaultValue={params.checkout}
-                  min={params.checkin ?? today}
-                  className="outline-none text-foreground bg-transparent text-sm py-1 w-32"
-                />
+              {/* Salida */}
+              <div className="px-6 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                <div className="flex flex-col text-left">
+                  <label className="text-xs font-semibold text-gray-800">Salida</label>
+                  <input
+                    type="date"
+                    name="checkout"
+                    defaultValue={params.checkout}
+                    min={params.checkin ?? today}
+                    className="outline-none bg-transparent text-gray-800 placeholder:text-gray-400 text-sm pt-0.5 w-32"
+                  />
+                </div>
               </div>
 
-              <button
-                type="submit"
-                className="bg-primary text-primary-foreground rounded-xl px-6 py-2.5 font-semibold hover:opacity-90 transition-opacity text-base"
-              >
-                Buscar
-              </button>
+              {/* Botón buscar */}
+              <div className="px-3 py-3 flex items-center justify-center sm:justify-start">
+                <button
+                  type="submit"
+                  className="bg-primary text-white rounded-full p-3.5 hover:opacity-90 transition-opacity shadow-md"
+                  aria-label="Buscar"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+              </div>
+
             </div>
           </form>
         </div>
@@ -142,7 +128,6 @@ export default async function Home({
             <h2 className="text-xl font-semibold">
               {properties?.length ?? 0} resultado{properties?.length !== 1 ? 's' : ''}
               {params.lugar ? ` en ${params.lugar}` : ''}
-              {params.q ? ` para "${params.q}"` : ''}
               {params.checkin && params.checkout ? ` — ${params.checkin} al ${params.checkout}` : ''}
             </h2>
             <Link href="/" className="text-sm text-primary hover:underline">
