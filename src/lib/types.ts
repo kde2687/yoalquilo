@@ -16,6 +16,7 @@ export type Property = {
   contact_whatsapp: string | null
   contact_instagram: string | null
   is_active: boolean
+  always_available: boolean | null
   created_at: string
 }
 

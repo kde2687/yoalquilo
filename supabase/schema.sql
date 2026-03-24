@@ -22,6 +22,7 @@ create table if not exists properties (
   contact_whatsapp text,
   contact_instagram text,
   is_active boolean not null default true,
+  always_available boolean not null default true,
   created_at timestamptz default now()
 );
 

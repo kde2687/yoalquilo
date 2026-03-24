@@ -143,7 +143,7 @@ export default async function PropertyPage({
 
           <div>
             <h2 className="text-lg font-semibold mb-3">Disponibilidad</h2>
-            <AvailabilityCalendar blockedDates={blockedDates} />
+            <AvailabilityCalendar blockedDates={blockedDates} alwaysAvailable={property.always_available} />
           </div>
 
           {/* Reviews */}

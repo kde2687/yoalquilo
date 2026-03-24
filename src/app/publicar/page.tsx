@@ -17,6 +17,7 @@ export type FormData = {
   description: string
   images: File[]
   imageUrls: string[]
+  alwaysAvailable: boolean
   blockedDates: Date[]
   price_per_night: number
   max_guests: number
@@ -31,6 +32,7 @@ export type FormData = {
 const INITIAL: FormData = {
   title: '', location: '', province: undefined, description: '',
   images: [], imageUrls: [],
+  alwaysAvailable: true,
   blockedDates: [],
   price_per_night: 0, max_guests: 4, bedrooms: 1, bathrooms: 1,
   contact_whatsapp: '', contact_phone: '', contact_email: '', contact_instagram: '',
@@ -95,6 +97,7 @@ export default function PublicarPage() {
           contact_whatsapp: form.contact_whatsapp || null,
           contact_instagram: form.contact_instagram || null,
           is_active: true,
+          always_available: form.alwaysAvailable,
         })
         .select()
         .single()
