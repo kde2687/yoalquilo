@@ -5,19 +5,19 @@ import PropertyCard from '@/components/PropertyCard'
 import { Property } from '@/lib/types'
 import { Search, MapPin, Calendar } from 'lucide-react'
 import Link from 'next/link'
+import { ARGENTINA_LOCATIONS } from '@/lib/argentina-cities'
 
-const PROVINCES = [
-  'Buenos Aires', 'CABA', 'Córdoba', 'Mendoza', 'Santa Fe',
-  'Salta', 'Jujuy', 'Tucumán', 'Misiones', 'Corrientes',
-  'Entre Ríos', 'Chubut', 'Neuquén', 'Río Negro', 'San Luis',
-  'La Rioja', 'Catamarca', 'Formosa', 'Chaco', 'Santiago del Estero',
-  'San Juan', 'La Pampa', 'Santa Cruz', 'Tierra del Fuego',
-]
+const ALL_PLACES = Array.from(new Set([
+  ...Object.keys(ARGENTINA_LOCATIONS),
+  ...Object.values(ARGENTINA_LOCATIONS).flatMap(partidos =>
+    Object.values(partidos).flat()
+  ),
+])).sort()
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; provincia?: string; checkin?: string; checkout?: string }>
+  searchParams: Promise<{ q?: string; lugar?: string; checkin?: string; checkout?: string }>
 }) {
   const params = await searchParams
   const supabase = await createClient()
@@ -41,13 +41,20 @@ export default async function Home({
     .order('created_at', { ascending: false })
 
   if (params.q) query = query.ilike('title', `%${params.q}%`)
-  if (params.provincia) query = query.eq('province', params.provincia)
+  if (params.lugar) {
+    const isProvince = Object.keys(ARGENTINA_LOCATIONS).includes(params.lugar)
+    if (isProvince) {
+      query = query.eq('province', params.lugar)
+    } else {
+      query = query.ilike('location', `%${params.lugar}%`)
+    }
+  }
   if (excludedIds.length > 0) query = query.not('id', 'in', `(${excludedIds.join(',')})`)
 
   const { data: properties } = await query.limit(24)
 
   const today = new Date().toISOString().split('T')[0]
-  const hasFilters = params.q || params.provincia || params.checkin
+  const hasFilters = params.q || params.lugar || params.checkin
 
   return (
     <div>
@@ -77,19 +84,22 @@ export default async function Home({
 
               <div className="w-px bg-border hidden sm:block" />
 
-              {/* Province */}
+              {/* Location */}
               <div className="flex items-center gap-2 px-3 border-t sm:border-t-0 border-border pt-2 sm:pt-0">
                 <MapPin className="w-5 h-5 text-muted-foreground shrink-0" />
-                <select
-                  name="provincia"
-                  defaultValue={params.provincia ?? ''}
-                  className="outline-none text-foreground bg-transparent text-base py-1 w-full sm:w-40"
-                >
-                  <option value="">Todas las provincias</option>
-                  {PROVINCES.map((p) => (
-                    <option key={p} value={p}>{p}</option>
+                <input
+                  name="lugar"
+                  list="places-list"
+                  defaultValue={params.lugar}
+                  placeholder="Ciudad o provincia..."
+                  autoComplete="off"
+                  className="outline-none text-foreground placeholder:text-muted-foreground bg-transparent text-base py-1 w-full sm:w-44"
+                />
+                <datalist id="places-list">
+                  {ALL_PLACES.map((p) => (
+                    <option key={p} value={p} />
                   ))}
-                </select>
+                </datalist>
               </div>
 
               <div className="w-px bg-border hidden sm:block" />
@@ -131,7 +141,7 @@ export default async function Home({
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">
               {properties?.length ?? 0} resultado{properties?.length !== 1 ? 's' : ''}
-              {params.provincia ? ` en ${params.provincia}` : ''}
+              {params.lugar ? ` en ${params.lugar}` : ''}
               {params.q ? ` para "${params.q}"` : ''}
               {params.checkin && params.checkout ? ` — ${params.checkin} al ${params.checkout}` : ''}
             </h2>
